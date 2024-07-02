@@ -1,14 +1,24 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["10 per minute"],
+    storage_uri="memory://",
+)
 
 @app.route('/')
+@limiter.exempt
 def home():
-    return "Hello, World!"
+    return render_template('index.html')
 
-@app.route('/domains/tlds', methods=['GET'])
+@app.route('/tlds', methods=['GET'])
+@limiter.exempt
 def get_tlds():
-    return jsonify(open('tlds.json').read())	
+    return open('tlds.json').read()
 
 if __name__ == '__main__':
     app.run(debug=True)
